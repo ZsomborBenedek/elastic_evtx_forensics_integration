@@ -26,9 +26,12 @@ def send_to_es(path, host, port, index, scheme, login, pwd):
 
         # Check if the path is a file (not a directory)
         if os.path.isfile(file_path) and file_path.endswith('.evtx'):
-            # print(f"{file_path} - sending to es...")
-            evtx2es(file_path, host, port, index, scheme,
-                    login=login, pwd=pwd, multiprocess=True)
+            print(f"{file_path} - sending to es...")
+            try:
+                evtx2es(file_path, host, port, index, scheme,
+                        login=login, pwd=pwd, multiprocess=True, chunk_size=4000)
+            except Exception as e:
+                print(f"-- Could not upload the log at {file_path} due to error: {str(e)}")
 
 
 def cleanup(file_path, extract_path, done_path):
