@@ -1,37 +1,9 @@
-import zipfile
 import os
 import argparse
-from evtx2es import evtx2es
 import getpass
 import shutil
-
-
-def extract_and_move(zip_path):
-    target_folder = os.path.splitext(zip_path)[0]
-
-    with zipfile.ZipFile(zip_path) as zip:
-        for zip_info in zip.infolist():
-            if not zip_info.is_dir():
-                zip_info.filename = os.path.basename(
-                    zip_info.filename)
-                if zip_info.filename.endswith(".evtx"):
-                    zip.extract(zip_info, target_folder)
-
-    return target_folder
-
-
-def send_to_es(path, host, port, index, scheme, login, pwd):
-    for filename in os.listdir(path):
-        file_path = os.path.join(path, filename)
-
-        # Check if the path is a file (not a directory)
-        if os.path.isfile(file_path) and file_path.endswith('.evtx'):
-            print(f"{file_path} - sending to es...")
-            try:
-                evtx2es(file_path, host, port, index, scheme,
-                        login=login, pwd=pwd, multiprocess=True, chunk_size=4000)
-            except Exception as e:
-                print(f"-- Could not upload the log at {file_path} due to error: {str(e)}")
+from upload_eventlogs import send_to_es
+from extract_eventlogs import extract_and_move
 
 
 def cleanup(file_path, extract_path, done_path):
