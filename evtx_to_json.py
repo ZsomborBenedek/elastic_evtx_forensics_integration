@@ -1,20 +1,24 @@
 import os
 import json
-from python_evtx import PyEvtxParser
 import argparse
+from evtx import PyEvtxParser
 
+class CustomEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, int):
+            return str(obj)
+        return json.JSONEncoder.default(self, obj)
 
 def evtx_to_ndjson(file_path):
-
     output_file = f"{os.path.splitext(file_path)[0]}.ndjson"
+    parser = PyEvtxParser(file_path)
 
     with open(output_file, 'w', encoding='utf-8') as ndjson_file:
-        with PyEvtxParser(file_path) as parser:
-            for record in parser.records():
-                # Convert each record to NDJSON format and write to the output file
-                ndjson_data = json.dumps(
-                    record, ensure_ascii=False)
-                ndjson_file.write(ndjson_data + '\n')
+        for record in parser.records_json():
+            # Convert each record to NDJSON format and write to the output file
+            ndjson_data = json.loads(record["data"])
+            ndjson_data = json.dumps(ndjson_data, cls=CustomEncoder)
+            ndjson_file.write(f"{ndjson_data}\n")
 
 
 def batch_convert(source_folder):
@@ -24,6 +28,8 @@ def batch_convert(source_folder):
             if file.endswith('.evtx'):
                 evtx_file_path = os.path.join(root, file)
                 evtx_to_ndjson(evtx_file_path)
+
+    return source_folder
 
 
 def main():
